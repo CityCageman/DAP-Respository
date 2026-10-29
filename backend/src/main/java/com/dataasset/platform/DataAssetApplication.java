@@ -1,0 +1,12 @@
+package com.dataasset.platform;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class DataAssetApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(DataAssetApplication.class, args);
+    }
+}

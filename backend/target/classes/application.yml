@@ -1,0 +1,70 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: data-asset-platform
+  datasource:
+    url: jdbc:postgresql://localhost:5432/asset_platform
+    username: asset
+    password: asset123
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 5000
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql, classpath:schema-v4-warehouse.sql
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+# PowerJob worker（阶段 C）：连独立调度中心（发现走控制台 7700，任务通讯走 HTTP 10010）
+powerjob:
+  worker:
+    enabled: true
+    app-name: data-asset-platform
+    server-address: 127.0.0.1:7700
+    protocol: HTTP
+    port: 27777
+    package-name: com.dataasset.platform.jobs
+    store-strategy: MEMORY
+    max-result-length: 4096
+
+logging:
+  level:
+    root: INFO
+    com.dataasset: INFO
+  pattern:
+    console: "%d{HH:mm:ss} %-5level %logger{20} - %msg%n"
+
+# 数据中台（独立的采集/数仓服务，8081）：数据源连接由中台持有，本平台通过 OpenAPI 拉取
+mid:
+  platform:
+    base-url: http://localhost:8081
+    token: mid-openapi-token-2026
+
+# 中台反向调用本平台（拉标准码表与代码对照）：中台请求头 X-OpenAPI-Token 需与此一致
+openapi:
+  mid-token: gov-openapi-token-2026
+
+# AI 智能体（OpenAI 兼容接口）：DeepSeek / 通义 / Kimi / one-api / vLLM / Ollama 的 /v1 均可
+# base-url 填到 /v1 为止；AI 血缘推断、中文注释补全均走此配置
+ai:
+  enabled: false                  # 填好 base-url / api-key / model 后改为 true
+  base-url: https://api.deepseek.com/v1
+  api-key: sk-please-fill
+  model: deepseek-chat
+  temperature: 0.2
+  timeout-seconds: 120
+  max-tables-per-batch: 12        # 单次调用喂给 LLM 的表数上限（控 token）
+  enrich-on-sync: true            # 元数据同步成功后自动 AI 补全中文注释
